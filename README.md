@@ -155,5 +155,7 @@ backend default_backend
 
 ```
 
+![Снимок экрана (1058)](https://github.com/user-attachments/assets/7347fe9b-c4dd-4210-bbd8-f8b6cb8cf569)
 
+![Снимок экрана (1059)](https://github.com/user-attachments/assets/0c513a51-abf4-4c41-bd97-d98336c8a8d2)
 

@@ -159,3 +159,84 @@ backend default_backend
 
 ![Снимок экрана (1059)](https://github.com/user-attachments/assets/0c513a51-abf4-4c41-bd97-d98336c8a8d2)
 
+
+## Задание 3*
+
+
+1. Настройте связку HAProxy + Nginx как было показано на лекции.
+2. Настройте Nginx так, чтобы файлы .jpg выдавались самим Nginx (предварительно разместите несколько тестовых картинок в директории /var/www/), а остальные запросы переадресовывались на HAProxy, который в свою очередь переадресовывал их на два Simple Python server.
+
+На проверку направьте конфигурационные файлы nginx, HAProxy, скриншоты с запросами jpg картинок и других файлов на Simple Python Server, демонстрирующие корректную настройку.
+
+## Ответ:
+
+ ` haproxy.cfg `
+
+```
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+
+frontend main
+    bind *:81  # Слушаем на порту 81 (порт, на который Nginx перенаправляет запросы)
+    default_backend servers
+
+backend servers
+    balance roundrobin
+    server server1 127.0.0.1:8001 check
+    server server2 127.0.0.1:8002 check
+
+```
+
+` /etc/nginx/sites-available/default `
+
+```
+server {
+    listen 80;
+    server_name 192.168.0.117; # Или IP адрес вашей машины
+
+    root /var/www/example.com/public_html;
+    index index.html index.htm index.nginx-debian.html;
+
+    location ~* \.jpg$ {
+        try_files $uri $uri/ =404;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:81;  # Перенаправляем запросы на HAProxy (порт 81)
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+```
+
+![Снимок экрана (1061)](https://github.com/user-attachments/assets/7bfeadcf-bb96-4ed5-9f2e-3bfe05ce0db6)
+
+![Снимок экрана (1062)](https://github.com/user-attachments/assets/4f7b14c5-3924-4a00-b551-a6ae377b1950)
+
+![Снимок экрана (1063)](https://github.com/user-attachments/assets/e6253e92-85b8-42c8-9c10-a9919c5a2bab)

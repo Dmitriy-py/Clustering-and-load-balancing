@@ -63,6 +63,39 @@ backend servers
 
 ```
 
+` server.py `
+
+```
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import sys
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        message = "Hello from Python server running on port {}".format(self.server.server_port)
+        self.wfile.write(bytes(message, "utf8"))
+
+if __name__ == '__main__':
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+    server_address = ('', port)
+    httpd = HTTPServer(server_address, RequestHandler)
+    print('Starting server on port {}'.format(port))
+    httpd.serve_forever()
+
+
+```
+
+![Снимок экрана (1056)](https://github.com/user-attachments/assets/65da4fc9-d115-4bdc-8500-40f9704b934d)
+
+![Снимок экрана (1054)](https://github.com/user-attachments/assets/56a2f0b1-6931-4b57-9e41-ed6ebe2df234)
+
+![Снимок экрана (1055)](https://github.com/user-attachments/assets/2969f4f1-e306-49d5-8996-4216a1b8732e)
+
+
+
+
 
 
 

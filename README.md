@@ -101,7 +101,59 @@ if __name__ == '__main__':
 3. HAproxy должен балансировать только тот http-трафик, который адресован домену example.local
 На проверку направьте конфигурационный файл haproxy, скриншоты, где видно перенаправление запросов на разные серверы при обращении к HAProxy c использованием домена example.local и без него.
 
+## Ответ:
 
+ ` haproxy.cfg `
+
+```
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+
+frontend main
+    bind *:80
+    # ACL для example.local
+    acl is_example_local hdr(host) -i example.local
+
+    # Перенаправляем трафик для example.local в backend servers_example_local
+    use_backend servers_example_local if is_example_local
+
+    # Для всего остального трафика отправляем на default_backend (можно настроить другой backend или просто вернуть ошибку)
+    default_backend default_backend
+
+backend servers_example_local
+    balance roundrobin
+    server server1 127.0.0.1:8001 weight 2 check
+    server server2 127.0.0.1:8002 weight 3 check
+    server server3 127.0.0.1:8003 weight 4 check
+
+backend default_backend
+   # В данном случае, возвращаем ошибку.  Можно настроить другой сервер для обработки трафика не example.local
+   http-request deny
+
+```
 
 
 
